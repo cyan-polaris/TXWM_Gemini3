@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桐心薇泯 | 绚丽浪漫版</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vanta@latest/dist/vanta.net.min.js"></script>
+
+    <style>
+        /* --- 基础设置 --- */
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;500;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Serif SC', serif;
+            background-color: #0f172a;
+            color: #ffffff;
+            overflow-x: hidden;
+            cursor: crosshair; /* 更改鼠标样式增加互动感 */
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(to bottom, #ec4899, #8b5cf6); border-radius: 4px; }
+
+        /* --- 核心特效类 --- */
+
+        /* 1. 玻璃拟态升级版 */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* 弹性过渡 */
+        }
+        .glass-card:hover {
+            transform: translateY(-8px) scale(1.01);
+            border-color: rgba(255, 192, 203, 0.4);
+            box-shadow: 0 15px 50px rgba(236, 72, 153, 0.3); /* 粉色能量光晕 */
+        }
+
+        /* 2. 绚丽流光标题 (Shimmer Text) */
+        .cp-shimmer {
+            font-weight: 900;
+            background: linear-gradient(
+                to right, 
+                #ff9a9e 20%, 
+                #fecfef 30%, 
+                #ffffff 50%, 
+                #a6c1ee 70%,
+                #ff9a9e 80%
+            );
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shimmer 5s linear infinite reverse; /* 流光动画 */
+        }
+        @keyframes shimmer {
+            to { background-position: 200% center; }
+        }
+
+        /* 3. 图片容器增强 */
+        .img-container {
+            overflow: hidden;
+            border-radius: 0.75rem;
+            position: relative;
+        }
+        .img-container::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(236, 72, 153, 0.4), transparent);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+        .img-container:hover::after {
+            opacity: 1;
+        }
+        .img-container img {
+            transition: transform 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+        .img-container:hover img {
+            transform: scale(1.08);
+        }
+
+        /* 4. 浪漫悬浮光斑 (Bokeh) */
+        .bokeh-container {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bokeh {
+            position: absolute;
+            width: 10vmin;
+            height: 10vmin;
+            border-radius: 50%;
+            background: rgba(255, 192, 203, 0.3);
+            filter: blur(5vmin);
+            animation: float-bokeh 10s infinite alternate ease-in-out;
+        }
+        @keyframes float-bokeh {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(10vw, -10vh); }
+        }
+
+        /* 5. 点击爆炸粒子样式 */
+        .click-particle {
+            position: fixed;
+            pointer-events: none;
+            width: 20px;
+            height: 20px;
+            background-size: contain;
+            background-repeat: no-repeat;
+            z-index: 9999;
+            /* 使用 SVG 爱心作为粒子 */
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ec4899'%3E%3Cpath d='M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.75 3c1.278 0 2.489.47 3.433 1.252C12.17 3.47 13.38 3 14.658 3c3.036 0 5.5 2.322 5.5 5.25 0 3.924-2.438 7.11-4.739 9.256a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z'/%3E%3C/svg%3E");
+        }
+
+        /* 6. 新增特效：浮动星星背景 */
+        .stars-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -15;
+        }
+        .star {
+            position: absolute;
+            background-color: white;
+            border-radius: 50%;
+            animation: twinkle 5s infinite ease-in-out;
+        }
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 1; }
+        }
+
+        /* 7. 新增特效：霓虹边框 */
+        .neon-border {
+            position: relative;
+            border-radius: 0.75rem;
+            overflow: hidden;
+        }
+        .neon-border::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff00cc, #3333ff, #00ccff, #33ff99, #ffcc00, #ff00cc);
+            background-size: 400%;
+            z-index: -1;
+            border-radius: 0.75rem;
+            animation: neon-border 20s linear infinite;
+            filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .neon-border:hover::before {
+            opacity: 1;
+        }
+        @keyframes neon-border {
+            0% { background-position: 0 0; }
+            50% { background-position: 400% 0; }
+            100% { background-position: 0 0; }
+        }
+
+        /* 8. 新增特效：浮动文字 */
+        .floating-text {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="vanta-bg" class="fixed top-0 left-0 w-full h-full -z-20"></div>
+    <div id="stars-bg" class="stars-bg"></div>
+    <div id="particles-container"></div>
+
+    <section class="relative h-screen flex items-center justify-center overflow-hidden">
+        <div class="bokeh-container">
+            <div class="bokeh" style="top: 20%; left: 30%; background: rgba(167, 139, 250, 0.4);"></div>
+            <div class="bokeh" style="top: 60%; left: 80%; animation-delay: -5s;"></div>
+            <div class="bokeh" style="top: 80%; left: 10%; background: rgba(251, 207, 232, 0.5); animation-delay: -2s;"></div>
+        </div>
+
+        <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#0f172a] z-0"></div>
+        
+        <div class="text-center z-10 px-4 hero-content opacity-0 translate-y-10 relative">
+            <h2 class="text-xl md:text-3xl tracking-[0.5em] mb-4 text-pink-200 font-light floating-text">李一桐 × 田曦薇</h2>
+            <h1 class="text-7xl md:text-[10rem] leading-none mb-8 cp-shimmer drop-shadow-2xl filter select-none">桐心薇泯</h1>
+            <p class="text-gray-300 text-lg md:text-2xl tracking-widest italic mb-12 floating-text">"星河璀璨，由于你我相遇"</p>
+            
+            <div class="mx-auto w-full max-w-5xl h-[55vh] img-container neon-border glass-card relative group cursor-pointer">
+                <img src="ttww.jpg" 
+                     alt="CP主题图" 
+                     class="w-full h-full object-cover object-top opacity-95 group-hover:opacity-100"
+                     onerror="this.src='https://placehold.co/1200x800/2a1b3d/ec4899?text=%E6%9B%BF%E4%BB%A3%E5%9B%BE%EF%BC%9A%E8%AF%B7%E6%A3%80%E6%9F%A5%E6%9C%AC%E5%9C%B0%E8%B7%AF%E5%BE%84'">
+                <div class="absolute bottom-0 left-0 w-full p-8 bg-gradient-to-t from-black/90 via-black/50 to-transparent z-10">
+                    <p class="text-white/90 text-lg tracking-wider font-light">数字化艺术空间 | Digital Art Space</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce text-pink-400 z-20">
+            <svg class="w-8 h-8 drop-shadow-lg" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+        </div>
+    </section>
+
+    <section class="py-32 px-4 md:px-12 relative z-10">
+        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-16">
+            
+            <div class="profile-card glass-card p-8 rounded-3xl relative opacity-0 -translate-x-24 neon-border">
+                <div class="aspect-[3/4] mb-8 img-container rounded-2xl shadow-2xl shadow-blue-500/20">
+                    <img src="lyt.jpg" alt="李一桐" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x800/1e293b/FFF?text=Li+Yitong'">
+                </div>
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-200 to-blue-400">李一桐</h2>
+                    <div class="flex flex-wrap gap-3 text-sm text-blue-200/80">
+                        <span class="border border-blue-400/30 px-3 py-1.5 rounded-full bg-blue-900/20">1990.09.06</span>
+                        <span class="border border-blue-400/30 px-3 py-1.5 rounded-full bg-blue-900/20">北京舞蹈学院</span>
+                    </div>
+                    <p class="text-gray-300 leading-loose text-justify text-[15px]">
+                        毕业于北京舞蹈学院，因出演《半妖倾城》进入演艺圈，凭借清新脱俗的气质和扎实的演技深受观众喜爱。她的表演细腻动人，能够完美诠释各种角色，从古装武侠到现代都市剧都能游刃有余。
+                    </p>
+                    <div class="pt-6 border-t border-blue-200/10">
+                        <p class="text-sm text-blue-300 mb-2">代表作品：</p>
+                        <p class="text-base text-white italic tracking-wider">《射雕英雄传》《鹤唳华亭》《特战荣耀》</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-card glass-card p-8 rounded-3xl relative opacity-0 translate-x-24 neon-border">
+                <div class="aspect-[3/4] mb-8 img-container rounded-2xl shadow-2xl shadow-pink-500/20">
+                    <img src="txw.jpg" alt="田曦薇" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/600x800/3d1e2b/FFF?text=Tian+Xiwei'">
+                </div>
+                <div class="space-y-6">
+                    <h2 class="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-pink-200 to-pink-400">田曦薇</h2>
+                    <div class="flex flex-wrap gap-3 text-sm text-pink-200/80">
+                        <span class="border border-pink-400/30 px-3 py-1.5 rounded-full bg-pink-900/20">1997.10.14</span>
+                        <span class="border border-pink-400/30 px-3 py-1.5 rounded-full bg-pink-900/20">上海戏剧学院</span>
+                    </div>
+                    <p class="text-gray-300 leading-loose text-justify text-[15px]">
+                        毕业于上海戏剧学院，以其甜美笑容和灵动演技走红，风格多变，在多部古装剧中表现出色。她的表演自然真实，能够将角色的内心世界细腻地呈现出来，深受年轻观众喜爱。
+                    </p>
+                    <div class="pt-6 border-t border-pink-200/10">
+                        <p class="text-sm text-pink-300 mb-2">代表作品：</p>
+                        <p class="text-base text-white italic tracking-wider">《如此可爱的我们》《卿卿日常》《花轿喜事》</p>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </section>
+
+    <section class="py-32 relative min-h-screen z-10">
+        <h2 class="text-5xl md:text-6xl text-center mb-24 font-black cp-shimmer timeline-title opacity-0 scale-75">桐心薇泯 · 甜蜜时刻</h2>
+        
+        <div class="max-w-5xl mx-auto relative px-6">
+            <div class="timeline-line absolute left-1/2 top-0 bottom-0 w-[3px] bg-gradient-to-b from-transparent via-pink-500/50 to-transparent -translate-x-1/2 hidden md:block"></div>
+
+            <div class="timeline-item mb-20 flex flex-col md:flex-row items-center justify-between w-full opacity-0 translate-y-12">
+                <div class="w-full md:w-5/12 order-1 md:text-right p-8 glass-card rounded-2xl group hover:bg-purple-900/20 transition neon-border">
+                    <h3 class="text-3xl font-bold text-purple-300 group-hover:text-purple-200 transition">首次见面</h3>
+                    <p class="text-sm text-purple-400/80 mt-2 font-medium">2023 | 《女子推理社1》</p>
+                    <p class="mt-4 text-gray-300 leading-relaxed">初次相遇，命运的齿轮开始转动。不仅是推理的搭档，更是默契的开端。</p>
+                </div>
+                <div class="z-20 flex items-center justify-center order-1 bg-purple-500 shadow-[0_0_20px_rgba(168,85,247,0.6)] w-10 h-10 rounded-full border-[6px] border-[#0f172a] md:mx-auto my-6 md:my-0 scale-125"></div>
+                <div class="w-full md:w-5/12 order-1"></div>
+            </div>
+
+            <div class="timeline-item mb-20 flex flex-col md:flex-row items-center justify-between w-full opacity-0 translate-y-12">
+                <div class="w-full md:w-5/12 order-1"></div>
+                <div class="z-20 flex items-center justify-center order-1 bg-pink-500 shadow-[0_0_20px_rgba(236,72,153,0.6)] w-10 h-10 rounded-full border-[6px] border-[#0f172a] md:mx-auto my-6 md:my-0 scale-125"></div>
+                <div class="w-full md:w-5/12 order-1 p-8 glass-card rounded-2xl group hover:bg-pink-900/20 transition neon-border">
+                    <h3 class="text-3xl font-bold text-pink-300 group-hover:text-pink-200 transition">恶魔的约会</h3>
+                    <p class="text-sm text-pink-400/80 mt-2 font-medium">2024 | 《女子推理社2》</p>
+                    <p class="mt-4 text-gray-300 leading-relaxed">感情升温，眼神拉丝。在探案的紧张氛围中，彼此成为了最坚实的依靠。</p>
+                </div>
+            </div>
+
+            <div class="timeline-item mb-20 flex flex-col md:flex-row items-center justify-between w-full opacity-0 translate-y-12">
+                <div class="w-full md:w-5/12 order-1 md:text-right p-8 glass-card rounded-2xl group hover:bg-blue-900/20 transition neon-border">
+                    <h3 class="text-3xl font-bold text-blue-300 group-hover:text-blue-200 transition">高铁同行</h3>
+                    <p class="text-sm text-blue-400/80 mt-2 font-medium">2024 | 私下互动</p>
+                    <p class="mt-4 text-gray-300 leading-relaxed">高铁站的亲密互动，被镜头捕捉的不仅是同行的背影，更是心与心的距离。</p>
+                </div>
+                <div class="z-20 flex items-center justify-center order-1 bg-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.6)] w-10 h-10 rounded-full border-[6px] border-[#0f172a] md:mx-auto my-6 md:my-0 scale-125"></div>
+                <div class="w-full md:w-5/12 order-1"></div>
+            </div>
+
+             <div class="timeline-item mb-20 flex flex-col md:flex-row items-center justify-between w-full opacity-0 translate-y-12">
+                <div class="w-full md:w-5/12 order-1"></div>
+                <div class="z-20 flex items-center justify-center order-1 bg-yellow-500 shadow-[0_0_20px_rgba(234,179,8,0.6)] w-10 h-10 rounded-full border-[6px] border-[#0f172a] md:mx-auto my-6 md:my-0 scale-125"></div>
+                <div class="w-full md:w-5/12 order-1 p-8 glass-card rounded-2xl group hover:bg-yellow-900/20 transition border-yellow-500/20 neon-border">
+                    <h3 class="text-3xl font-bold text-yellow-300 group-hover:text-yellow-200 transition">微博之夜</h3>
+                    <p class="text-sm text-yellow-400/80 mt-2 font-medium">2025初 | 金婚现场</p>
+                    <p class="mt-4 text-gray-300 leading-relaxed">众目睽睽下的甜蜜暴击，被粉丝戏称为"金婚现场"，每一帧都是壁纸。</p>
+                </div>
+            </div>
+
+            <div class="timeline-item mb-20 flex flex-col md:flex-row items-center justify-between w-full opacity-0 translate-y-12">
+                <div class="w-full md:w-5/12 order-1 md:text-right p-8 glass-card rounded-2xl border border-red-500/40 bg-red-900/20 hover:bg-red-900/40 transition neon-border">
+                    <h3 class="text-3xl font-bold text-red-300">七夕佳节</h3>
+                    <p class="text-sm text-red-400/80 mt-2 font-medium">2025.08 | 未完待续</p>
+                    <p class="mt-4 text-gray-200 leading-relaxed">书写着永远。在这个充满爱意的日子里，故事还在继续...</p>
+                </div>
+                <div class="z-20 flex items-center justify-center order-1 bg-red-500 shadow-[0_0_30px_rgba(239,68,68,0.8)] w-12 h-12 rounded-full border-[6px] border-[#0f172a] md:mx-auto my-6 md:my-0 animate-pulse scale-125"></div>
+                <div class="w-full md:w-5/12 order-1"></div>
+            </div>
+
+        </div>
+    </section>
+
+    <footer class="text-center py-12 text-gray-400 text-sm glass-card border-t border-white/5 relative z-10">
+        <p>© 2025 桐心薇泯 CP Fanpage | Crafted with <span class="text-pink-500">❤</span> for LYT & TXW</p>
+    </footer>
+
+    <script>
+        // --- 特效 1: 鼠标点击爆炸爱心 (炸裂核心!) ---
+        document.addEventListener('click', (e) => {
+            const container = document.getElementById('particles-container');
+            const particleCount = 12; // 每次点击产生的爱心数量
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('click-particle');
+                container.appendChild(particle);
+
+                // 设置初始位置在鼠标点击处
+                gsap.set(particle, {
+                    x: e.clientX,
+                    y: e.clientY,
+                    scale: 0
+                });
+
+                // 随机爆炸方向和距离
+                const angle = Math.random() * Math.PI * 2;
+                const distance = Math.random() * 100 + 50;
+                const destinationX = e.clientX + Math.cos(angle) * distance;
+                const destinationY = e.clientY + Math.sin(angle) * distance;
+                const randomRotation = Math.random() * 360;
+
+                // GSAP 爆炸动画
+                gsap.to(particle, {
+                    x: destinationX,
+                    y: destinationY,
+                    rotation: randomRotation,
+                    scale: Math.random() * 1.5 + 0.5,
+                    opacity: 0,
+                    duration: Math.random() * 1 + 0.5,
+                    ease: "power3.out",
+                    onComplete: () => {
+                        particle.remove(); // 动画结束后移除元素
+                    }
+                });
+            }
+        });
+
+        // --- 特效 2: 创建星星背景 ---
+        function createStars() {
+            const starsContainer = document.getElementById('stars-bg');
+            const starCount = 150;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // 随机大小
+                const size = Math.random() * 3;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // 随机位置
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // 随机动画延迟
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // --- 基础配置 (Vanta背景 & GSAP滚动) ---
+        document.addEventListener("DOMContentLoaded", () => {
+            // 创建星星背景
+            createStars();
+            
+            // Vanta 背景 (保持原有深邃感，为前景特效做铺垫)
+            VANTA.NET({
+                el: "#vanta-bg",
+                mouseControls: true, touchControls: true, gyroControls: false,
+                minHeight: 200.00, minWidth: 200.00, scale: 1.00, scaleMobile: 1.00,
+                color: 0xff80ab, backgroundColor: 0x0f172a,
+                points: 10.00, maxDistance: 20.00, spacing: 16.00, showDots: true
+            });
+
+            // GSAP 滚动动画 (增加弹性，更生动)
+            gsap.registerPlugin(ScrollTrigger);
+
+            gsap.to(".hero-content", { opacity: 1, y: 0, duration: 1.8, ease: "elastic.out(1, 0.75)", delay: 0.3 });
+
+            gsap.utils.toArray(".profile-card").forEach((card, i) => {
+                gsap.to(card, {
+                    scrollTrigger: { trigger: card, start: "top 85%", toggleActions: "play none none none" },
+                    opacity: 1, x: 0, duration: 1.2, ease: "back.out(1.2)"
+                });
+            });
+
+            gsap.to(".timeline-title", {
+                scrollTrigger: { trigger: ".timeline-title", start: "top 85%" },
+                opacity: 1, scale: 1, duration: 1, ease: "elastic.out(1, 0.5)"
+            });
+
+            gsap.utils.toArray(".timeline-item").forEach((item, index) => {
+                gsap.to(item, {
+                    scrollTrigger: { trigger: item, start: "top 80%" },
+                    opacity: 1, y: 0, duration: 1, delay: index * 0.15, ease: "power3.out"
+                });
+            });
+        });
+    </script>
+</body>
+</html>
